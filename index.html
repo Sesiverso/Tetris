@@ -153,6 +153,8 @@
             }
             document.getElementById("score").innerText = score;
         }
+function moveLeft() { if (canMove) movePiece(-1); }
+function moveRight() { if (canMove) movePiece(1); }
 
         function update(time = 0) {
             const deltaTime = time - lastTime;
