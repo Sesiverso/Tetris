@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tetris Aprimorado</title>
+    <title>Tetris Enumerado</title>
     <style>
         body { text-align: center; font-family: Arial, sans-serif; }
         canvas { background: black; display: block; margin: 0 auto; }
-        .controls { display: flex; justify-content: center; margin-top: 10px; }
-        button { font-size: 20px; margin: 5px; padding: 10px; cursor: pointer; }
-        #question { font-size: 18px; margin-top: 10px; }
-        #answer { font-size: 18px; padding: 5px; width: 50px; text-align: center; }
+        .controls { display: flex; justify-content: center; margin-top: 5px; }
+        button { font-size: 16px; margin: 3px; padding: 8px; cursor: pointer; }
+        #question { font-size: 16px; margin-top: 5px; }
+        #answer { font-size: 16px; padding: 4px; width: 50px; text-align: center; }
     </style>
 </head>
 <body>
-    <h1>Tetris Aprimorado</h1>
+    <h1>Tetris Enumerado</h1>
     <p id="question"></p>
     <input type="number" id="answer">
     <button onclick="checkAnswer()">Responder</button>
-    <canvas id="tetris" width="300" height="600"></canvas>
+    <canvas id="tetris" width="200" height="400"></canvas>
     <h2>Pontuação: <span id="score">0</span></h2>
 
     <div class="controls">
@@ -31,7 +31,7 @@
     <script>
         const canvas = document.getElementById("tetris");
         const ctx = canvas.getContext("2d");
-        const ROWS = 20, COLS = 10, BLOCK_SIZE = 30;
+        const ROWS = 15, COLS = 7, BLOCK_SIZE = 20;
         let board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
         let score = 0, dropInterval = 1000, lastTime = 0, dropCounter = 0;
         let canMove = false;
@@ -44,7 +44,7 @@
             { shape: [[1, 1, 0], [0, 1, 1]], color: COLORS[3] }, // Z
             { shape: [[0, 1, 1], [1, 1, 0]], color: COLORS[4] }, // S
             { shape: [[1, 0, 0], [1, 1, 1]], color: COLORS[5] }, // L
-            { shape: [[0, 0, 1], [1, 1, 1]], color: COLORS[6] }  // J
+            { shape: [[0, 0, 1], [1, 1, 1]] , color: COLORS[6] } // J
         ];
 
         let piece = createPiece();
@@ -52,7 +52,7 @@
 
         function createPiece() {
             const randomPiece = PIECES[Math.floor(Math.random() * PIECES.length)];
-            return { shape: randomPiece.shape, color: randomPiece.color, x: 3, y: 0 };
+            return { shape: randomPiece.shape, color: randomPiece.color, x: 2, y: 0 };
         }
 
         function drawBoard() {
@@ -135,11 +135,19 @@
 
         function generateQuestion() {
             let num = Math.floor(Math.random() * 50) + 1;
-            let isSuccessor = Math.random() > 0.5;
-            document.getElementById("question").innerText = isSuccessor 
-                ? `Qual é o sucessor de ${num}?` 
-                : `Qual é o antecessor de ${num}?`;
-            document.getElementById("answer").dataset.answer = isSuccessor ? num + 1 : num - 1;
+            let type = Math.random();
+            let questionText, correctAnswer;
+
+            if (type < 0.5) {
+                questionText = `Qual é o sucessor de ${num}?`;
+                correctAnswer = num + 1;
+            } else {
+                questionText = `Qual é o antecessor de ${num}?`;
+                correctAnswer = num - 1;
+            }
+
+            document.getElementById("question").innerText = questionText;
+            document.getElementById("answer").dataset.answer = correctAnswer;
         }
 
         function checkAnswer() {
@@ -153,8 +161,9 @@
             }
             document.getElementById("score").innerText = score;
         }
-function moveLeft() { if (canMove) movePiece(-1); }
-function moveRight() { if (canMove) movePiece(1); }
+
+        function moveLeft() { if (canMove) movePiece(-1); }
+        function moveRight() { if (canMove) movePiece(1); }
 
         function update(time = 0) {
             const deltaTime = time - lastTime;
