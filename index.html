@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tetris</title>
+    <title>Tetris Aprimorado</title>
     <style>
         body { text-align: center; font-family: Arial, sans-serif; }
         canvas { background: black; display: block; margin: 0 auto; }
-        .controls {
-            display: flex; justify-content: center; margin-top: 10px;
-        }
-        button {
-            font-size: 20px; margin: 5px; padding: 10px; cursor: pointer;
-        }
+        .controls { display: flex; justify-content: center; margin-top: 10px; }
+        button { font-size: 20px; margin: 5px; padding: 10px; cursor: pointer; }
+        #question { font-size: 18px; margin-top: 10px; }
+        #answer { font-size: 18px; padding: 5px; width: 50px; text-align: center; }
     </style>
 </head>
 <body>
-    <h1>Tetris</h1>
+    <h1>Tetris Aprimorado</h1>
+    <p id="question"></p>
+    <input type="number" id="answer">
+    <button onclick="checkAnswer()">Responder</button>
     <canvas id="tetris" width="300" height="600"></canvas>
     <h2>Pontuação: <span id="score">0</span></h2>
 
@@ -31,31 +32,34 @@
         const canvas = document.getElementById("tetris");
         const ctx = canvas.getContext("2d");
         const ROWS = 20, COLS = 10, BLOCK_SIZE = 30;
-        const board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+        let board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
         let score = 0, dropInterval = 1000, lastTime = 0, dropCounter = 0;
+        let canMove = false;
 
+        const COLORS = ["cyan", "yellow", "purple", "red", "green", "orange", "blue"];
         const PIECES = [
-            [[1, 1, 1, 1]], // I
-            [[1, 1], [1, 1]], // O
-            [[0, 1, 0], [1, 1, 1]], // T
-            [[1, 1, 0], [0, 1, 1]], // Z
-            [[0, 1, 1], [1, 1, 0]], // S
-            [[1, 0, 0], [1, 1, 1]], // L
-            [[0, 0, 1], [1, 1, 1]] // J
+            { shape: [[1, 1, 1, 1]], color: COLORS[0] }, // I
+            { shape: [[1, 1], [1, 1]], color: COLORS[1] }, // O
+            { shape: [[0, 1, 0], [1, 1, 1]], color: COLORS[2] }, // T
+            { shape: [[1, 1, 0], [0, 1, 1]], color: COLORS[3] }, // Z
+            { shape: [[0, 1, 1], [1, 1, 0]], color: COLORS[4] }, // S
+            { shape: [[1, 0, 0], [1, 1, 1]], color: COLORS[5] }, // L
+            { shape: [[0, 0, 1], [1, 1, 1]], color: COLORS[6] }  // J
         ];
 
         let piece = createPiece();
-        
+        generateQuestion();
+
         function createPiece() {
-            const shape = PIECES[Math.floor(Math.random() * PIECES.length)];
-            return { shape, x: 3, y: 0 };
+            const randomPiece = PIECES[Math.floor(Math.random() * PIECES.length)];
+            return { shape: randomPiece.shape, color: randomPiece.color, x: 3, y: 0 };
         }
 
         function drawBoard() {
             ctx.fillStyle = "black";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             board.forEach((row, y) => row.forEach((value, x) => {
-                if (value) drawBlock(x, y, "white");
+                if (value) drawBlock(x, y, value);
             }));
         }
 
@@ -68,15 +72,16 @@
 
         function drawPiece() {
             piece.shape.forEach((row, y) => row.forEach((value, x) => {
-                if (value) drawBlock(piece.x + x, piece.y + y, "cyan");
+                if (value) drawBlock(piece.x + x, piece.y + y, piece.color);
             }));
         }
 
         function movePiece(dir) {
-            if (!collides(piece.shape, piece.x + dir, piece.y)) piece.x += dir;
+            if (canMove && !collides(piece.shape, piece.x + dir, piece.y)) piece.x += dir;
         }
 
         function rotatePiece() {
+            if (!canMove) return;
             const rotated = piece.shape[0].map((_, i) => piece.shape.map(row => row[i]).reverse());
             if (!collides(rotated, piece.x, piece.y)) piece.shape = rotated;
         }
@@ -87,24 +92,22 @@
         }
 
         function dropPiece() {
+            if (!canMove) return;
             if (!collides(piece.shape, piece.x, piece.y + 1)) {
                 piece.y++;
             } else {
                 mergePiece();
+                checkEncaje();
                 removeLines();
                 piece = createPiece();
-                if (collides(piece.shape, piece.x, piece.y)) {
-                    alert("Game Over!");
-                    board.forEach(row => row.fill(0));
-                    score = 0;
-                    document.getElementById("score").innerText = score;
-                }
+                canMove = false;
+                generateQuestion();
             }
         }
 
         function mergePiece() {
             piece.shape.forEach((row, y) => row.forEach((value, x) => {
-                if (value) board[piece.y + y][piece.x + x] = 1;
+                if (value) board[piece.y + y][piece.x + x] = piece.color;
             }));
         }
 
@@ -114,10 +117,41 @@
                     board.splice(y, 1);
                     board.unshift(Array(COLS).fill(0));
                     score += 100;
-                    document.getElementById("score").innerText = score;
-                    dropInterval *= 0.95;
                 }
             }
+            document.getElementById("score").innerText = score;
+        }
+
+        function checkEncaje() {
+            for (let y = 0; y < ROWS - 1; y++) {
+                for (let x = 0; x < COLS - 1; x++) {
+                    if (board[y][x] && board[y][x + 1] && board[y + 1][x] && board[y + 1][x + 1]) {
+                        board[y][x] = board[y][x + 1] = board[y + 1][x] = board[y + 1][x + 1] = 0;
+                        score += 30;
+                    }
+                }
+            }
+        }
+
+        function generateQuestion() {
+            let num = Math.floor(Math.random() * 50) + 1;
+            let isSuccessor = Math.random() > 0.5;
+            document.getElementById("question").innerText = isSuccessor 
+                ? `Qual é o sucessor de ${num}?` 
+                : `Qual é o antecessor de ${num}?`;
+            document.getElementById("answer").dataset.answer = isSuccessor ? num + 1 : num - 1;
+        }
+
+        function checkAnswer() {
+            let input = parseInt(document.getElementById("answer").value);
+            let correct = parseInt(document.getElementById("answer").dataset.answer);
+            if (input === correct) {
+                score += 5;
+                canMove = true;
+            } else {
+                score -= 5;
+            }
+            document.getElementById("score").innerText = score;
         }
 
         function update(time = 0) {
@@ -132,17 +166,6 @@
             drawPiece();
             requestAnimationFrame(update);
         }
-
-        function moveLeft() { movePiece(-1); }
-        function moveRight() { movePiece(1); }
-
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "ArrowLeft") moveLeft();
-            if (e.key === "ArrowRight") moveRight();
-          
-            if (e.key === "ArrowUp") rotatePiece();
-            if (e.key === "ArrowDown") dropPiece();
-        });
 
         update();
     </script>
