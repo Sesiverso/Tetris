@@ -5,74 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tetris Enumerado</title>
     <style>
-        body {
-            text-align: center;
-            font-family: 'Comic Sans MS', cursive, sans-serif;
-            background: linear-gradient(45deg, #ffcc00, #ff6699, #66ccff);
-            background-size: 400% 400%;
-            animation: gradient 5s infinite alternate;
-        }
-
-        @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 100% 50%; }
-        }
-
-        h1 {
-            color: #fff;
-            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
-        }
-
-        .controls {
-            display: flex;
-            justify-content: center;
-            margin-top: 10px;
-        }
-
-        button {
-            font-size: 18px;
-            padding: 10px;
-            margin: 5px;
-            border: none;
-            background: #ff3366;
-            color: white;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        button:hover {
-            background: #ff6699;
-        }
-
-        #question {
-            font-size: 18px;
-            font-weight: bold;
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-            margin-top: 10px;
-        }
-
-        #answer {
-            font-size: 18px;
-            padding: 5px;
-            width: 60px;
-            text-align: center;
-            border: 2px solid #ff3366;
-        }
-
-        h2 {
-            color: white;
-            font-size: 22px;
-        }
+        body { text-align: center; font-family: 'Comic Sans MS', cursive, sans-serif; background-color: #ffcc00; }
+        h1 { color: #ff6600; font-size: 36px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); }
+        canvas { background: #f7f7f7; border: 5px solid #ff6600; display: block; margin: 0 auto; }
+        .controls { display: flex; justify-content: center; margin-top: 10px; }
+        button { font-size: 18px; margin: 5px; padding: 10px; background-color: #ff6600; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #ff3300; }
+        #question { font-size: 18px; margin-top: 15px; color: #333; font-weight: bold; }
+        #answer { font-size: 18px; padding: 5px; width: 60px; text-align: center; border-radius: 5px; }
+        h2 { font-size: 24px; color: #ff6600; margin-top: 10px; }
+        #score { font-size: 30px; color: #ff3300; font-weight: bold; }
+        .celebration { font-size: 22px; font-weight: bold; color: #ff3300; margin-top: 20px; }
     </style>
 </head>
 <body>
-    <h1>Tetris Enumerado</h1>
+    <h1>Comemore o Dia da Matemática com Tetris!</h1>
+    <p class="celebration">🎉 Vamos jogar e aprender!</p>
     <p id="question"></p>
     <input type="number" id="answer">
     <button onclick="checkAnswer()">Responder</button>
-    <canvas id="tetris" width="140" height="280"></canvas>
+    <canvas id="tetris" width="200" height="400"></canvas>
     <h2>Pontuação: <span id="score">0</span></h2>
 
     <div class="controls">
@@ -85,20 +37,20 @@
     <script>
         const canvas = document.getElementById("tetris");
         const ctx = canvas.getContext("2d");
-        const ROWS = 14, COLS = 5, BLOCK_SIZE = 20;
+        const ROWS = 15, COLS = 7, BLOCK_SIZE = 20;
         let board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-        let score = 0, canMove = false;
-        let questionType = 'sucessor';
+        let score = 0, dropInterval = 1000, lastTime = 0, dropCounter = 0;
+        let canMove = false;
 
         const COLORS = ["cyan", "yellow", "purple", "red", "green", "orange", "blue"];
         const PIECES = [
-            { shape: [[1, 1, 1, 1]], color: COLORS[0] }, 
-            { shape: [[1, 1], [1, 1]], color: COLORS[1] }, 
-            { shape: [[0, 1, 0], [1, 1, 1]], color: COLORS[2] }, 
-            { shape: [[1, 1, 0], [0, 1, 1]], color: COLORS[3] }, 
-            { shape: [[0, 1, 1], [1, 1, 0]], color: COLORS[4] }, 
-            { shape: [[1, 0, 0], [1, 1, 1]], color: COLORS[5] }, 
-            { shape: [[0, 0, 1], [1, 1, 1]], color: COLORS[6] }  
+            { shape: [[1, 1, 1, 1]], color: COLORS[0] }, // I
+            { shape: [[1, 1], [1, 1]], color: COLORS[1] }, // O
+            { shape: [[0, 1, 0], [1, 1, 1]], color: COLORS[2] }, // T
+            { shape: [[1, 1, 0], [0, 1, 1]], color: COLORS[3] }, // Z
+            { shape: [[0, 1, 1], [1, 1, 0]], color: COLORS[4] }, // S
+            { shape: [[1, 0, 0], [1, 1, 1]], color: COLORS[5] }, // L
+            { shape: [[0, 0, 1], [1, 1, 1]] , color: COLORS[6] } // J
         ];
 
         let piece = createPiece();
@@ -106,11 +58,12 @@
 
         function createPiece() {
             const randomPiece = PIECES[Math.floor(Math.random() * PIECES.length)];
-            return { shape: randomPiece.shape, color: randomPiece.color, x: 1, y: 0 };
+            return { shape: randomPiece.shape, color: randomPiece.color, x: 2, y: 0 };
         }
 
         function drawBoard() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             board.forEach((row, y) => row.forEach((value, x) => {
                 if (value) drawBlock(x, y, value);
             }));
@@ -123,39 +76,25 @@
             ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
         }
 
-        function collides(shape, x, y) {
-            for (let row = 0; row < shape.length; row++) {
-                for (let col = 0; col < shape[row].length; col++) {
-                    if (shape[row][col]) {
-                        if (x + col < 0 || x + col >= COLS || y + row >= ROWS || board[y + row][x + col]) {
-                            return true;
-                        }
-                    }
-                }
-            }
-            return false;
+        function drawPiece() {
+            piece.shape.forEach((row, y) => row.forEach((value, x) => {
+                if (value) drawBlock(piece.x + x, piece.y + y, piece.color);
+            }));
         }
 
-        function moveLeft() {
-            if (canMove && !collides(piece.shape, piece.x - 1, piece.y)) {
-                piece.x--;
-                drawBoard();
-            }
+        function movePiece(dir) {
+            if (canMove && !collides(piece.shape, piece.x + dir, piece.y)) piece.x += dir;
         }
 
         function rotatePiece() {
-            const rotatedShape = piece.shape[0].map((_, index) => piece.shape.map(row => row[index])).reverse();
-            if (!collides(rotatedShape, piece.x, piece.y)) {
-                piece.shape = rotatedShape;
-                drawBoard();
-            }
+            if (!canMove) return;
+            const rotated = piece.shape[0].map((_, i) => piece.shape.map(row => row[i]).reverse());
+            if (!collides(rotated, piece.x, piece.y)) piece.shape = rotated;
         }
 
-        function moveRight() {
-            if (canMove && !collides(piece.shape, piece.x + 1, piece.y)) {
-                piece.x++;
-                drawBoard();
-            }
+        function collides(shape, x, y) {
+            return shape.some((row, dy) => row.some((value, dx) => 
+                value && (board[y + dy] && board[y + dy][x + dx]) !== 0));
         }
 
         function dropPiece() {
@@ -165,11 +104,11 @@
             } else {
                 mergePiece();
                 checkEncaje();
+                removeLines();
                 piece = createPiece();
                 canMove = false;
                 generateQuestion();
             }
-            drawBoard();
         }
 
         function mergePiece() {
@@ -178,52 +117,74 @@
             }));
         }
 
-        function checkEncaje() {
-            for (let y = 0; y < ROWS; y++) {
-                for (let x = 0; x < COLS; x++) {
-                    if (board[y][x]) {
-                        let color = board[y][x];
-                        let count = 1;
-                        
-                        for (let i = 1; i < 5; i++) {
-                            if (board[y][x + i] === color) count++;
-                            else break;
-                        }
-
-                        if (count === 5) {
-                            for (let i = 0; i < 5; i++) board[y][x + i] = 0;
-                            score += 30;
-                        }
-                    }
+        function removeLines() {
+            for (let y = ROWS - 1; y >= 0; y--) {
+                if (board[y].every(value => value !== 0)) {
+                    board.splice(y, 1);
+                    board.unshift(Array(COLS).fill(0));
+                    score += 100;
                 }
             }
             document.getElementById("score").innerText = score;
         }
 
+        function checkEncaje() {
+            for (let y = 0; y < ROWS - 1; y++) {
+                for (let x = 0; x < COLS - 1; x++) {
+                    if (board[y][x] && board[y][x + 1] && board[y + 1][x] && board[y + 1][x + 1]) {
+                        board[y][x] = board[y][x + 1] = board[y + 1][x] = board[y + 1][x + 1] = 0;
+                        score += 30;
+                    }
+                }
+            }
+        }
+
         function generateQuestion() {
             let num = Math.floor(Math.random() * 50) + 1;
-            let correctAnswer;
-        
-            if (questionType === 'sucessor') {
-                document.getElementById("question").innerText = `Qual é o sucessor de ${num}?`;
+            let type = Math.random();
+            let questionText, correctAnswer;
+
+            if (type < 0.5) {
+                questionText = `Qual é o sucessor de ${num}?`;
                 correctAnswer = num + 1;
-                questionType = 'antecessor'; // Próxima pergunta será sobre antecessor
             } else {
-                document.getElementById("question").innerText = `Qual é o antecessor de ${num}?`;
+                questionText = `Qual é o antecessor de ${num}?`;
                 correctAnswer = num - 1;
-                questionType = 'sucessor'; // Próxima pergunta será sobre sucessor
             }
+
+            document.getElementById("question").innerText = questionText;
             document.getElementById("answer").dataset.answer = correctAnswer;
         }
 
         function checkAnswer() {
             let input = parseInt(document.getElementById("answer").value);
             let correct = parseInt(document.getElementById("answer").dataset.answer);
-            if (input === correct) { score += 5; canMove = true; } else { score -= 5; }
+            if (input === correct) {
+                score += 5;
+                canMove = true;
+            } else {
+                score -= 5;
+            }
             document.getElementById("score").innerText = score;
         }
 
-        setInterval(dropPiece, 800);
+        function moveLeft() { if (canMove) movePiece(-1); }
+        function moveRight() { if (canMove) movePiece(1); }
+
+        function update(time = 0) {
+            const deltaTime = time - lastTime;
+            lastTime = time;
+            dropCounter += deltaTime;
+            if (dropCounter > dropInterval) {
+                dropPiece();
+                dropCounter = 0;
+            }
+            drawBoard();
+            drawPiece();
+            requestAnimationFrame(update);
+        }
+
+        update();
     </script>
 </body>
 </html>
