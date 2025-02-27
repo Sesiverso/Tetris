@@ -23,14 +23,6 @@
             text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
         }
 
-        canvas {
-            background: white;
-            display: block;
-            margin: 10px auto;
-            border: 5px solid #ff3366;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
-        }
-
         .controls {
             display: flex;
             justify-content: center;
@@ -211,6 +203,7 @@
         function generateQuestion() {
             let num = Math.floor(Math.random() * 50) + 1;
             let correctAnswer;
+        
             if (questionType === 'sucessor') {
                 document.getElementById("question").innerText = `Qual é o sucessor de ${num}?`;
                 correctAnswer = num + 1;
