@@ -129,14 +129,59 @@
         }
 
         function checkEncaje() {
-            for (let y = 0; y < ROWS - 1; y++) {
-                for (let x = 0; x < COLS - 1; x++) {
-                    if (board[y][x] && board[y][x + 1] && board[y + 1][x] && board[y + 1][x + 1]) {
-                        board[y][x] = board[y][x + 1] = board[y + 1][x] = board[y + 1][x + 1] = 0;
-                        score += 30;
+            let scoreBonus = 0;
+
+            // Verifica horizontalmente
+            for (let y = 0; y < ROWS; y++) {
+                for (let x = 0; x < COLS - 4; x++) {
+                    const color = board[y][x];
+                    if (color && board[y][x + 1] === color && board[y][x + 2] === color && board[y][x + 3] === color && board[y][x + 4] === color) {
+                        // Limpa as 5 peças
+                        board[y][x] = board[y][x + 1] = board[y][x + 2] = board[y][x + 3] = board[y][x + 4] = 0;
+                        scoreBonus += 30;
                     }
                 }
             }
+
+            // Verifica verticalmente
+            for (let x = 0; x < COLS; x++) {
+                for (let y = 0; y < ROWS - 4; y++) {
+                    const color = board[y][x];
+                    if (color && board[y + 1][x] === color && board[y + 2][x] === color && board[y + 3][x] === color && board[y + 4][x] === color) {
+                        // Limpa as 5 peças
+                        board[y][x] = board[y + 1][x] = board[y + 2][x] = board[y + 3][x] = board[y + 4][x] = 0;
+                        scoreBonus += 30;
+                    }
+                }
+            }
+
+            // Verifica diagonalmente (para direita)
+            for (let y = 0; y < ROWS - 4; y++) {
+                for (let x = 0; x < COLS - 4; x++) {
+                    const color = board[y][x];
+                    if (color && board[y + 1][x + 1] === color && board[y + 2][x + 2] === color && board[y + 3][x + 3] === color && board[y + 4][x + 4] === color) {
+                        // Limpa as 5 peças
+                        board[y][x] = board[y + 1][x + 1] = board[y + 2][x + 2] = board[y + 3][x + 3] = board[y + 4][x + 4] = 0;
+                        scoreBonus += 30;
+                    }
+                }
+            }
+
+            // Verifica diagonalmente (para esquerda)
+            for (let y = 0; y < ROWS - 4; y++) {
+                for (let x = 4; x < COLS; x++) {
+                    const color = board[y][x];
+                    if (color && board[y + 1][x - 1] === color && board[y + 2][x - 2] === color && board[y + 3][x - 3] === color && board[y + 4][x - 4] === color) {
+                        // Limpa as 5 peças
+                        board[y][x] = board[y + 1][x - 1] = board[y + 2][x - 2] = board[y + 3][x - 3] = board[y + 4][x - 4] = 0;
+                        scoreBonus += 30;
+                    }
+                }
+            }
+
+            // Atualiza a pontuação
+            score += scoreBonus;
+            document.getElementById("score").innerText = score;
         }
 
         function generateQuestion() {
